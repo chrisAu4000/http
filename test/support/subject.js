@@ -1,5 +1,4 @@
-var most = require('most')
-
+var create = require('@most/create').create
 function now(fn) {
   setTimeout(fn, 0)
 }
@@ -9,7 +8,7 @@ function Subject(initial) {
   var _end
   var _error
 
-  var stream = most.create(
+  var stream = create(
     function(add, end, error) {
       _add = add
       _end = end

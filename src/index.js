@@ -1,6 +1,6 @@
 import hold from '@most/hold'
 import superagent from 'superagent'
-import create from '@most/create'
+import {create} from '@most/create'
 
 const notNull = arg => arg !== null
 const typeOf = (type, arg) => typeof arg === type
@@ -72,42 +72,39 @@ const optionsToSuperagent =
 
 const urlToSuperagent = url => superagent.get(url)
 
-const createResponse$ =
-  reqOptions =>
-    create(
-      (add, end, error) => {
-        let request = is.typeOf(`string`, reqOptions) ?
-          urlToSuperagent(reqOptions) :
-          request
+const createResponse$ = reqOptions =>
+  create((add, end, error) => {
+    let request = is.typeOf(`string`, reqOptions) ?
+      urlToSuperagent(reqOptions) :
+      request
 
-        request = is.typeOf(`object`, reqOptions) ?
-          optionsToSuperagent(reqOptions) :
-          request
+    request = is.typeOf(`object`, reqOptions) ?
+      optionsToSuperagent(reqOptions) :
+      request
 
-        if (!request) {
-          error(new Error(`Observable of requests given to HTTP ` +
-            `Driver must emit either URL strings or objects with parameters.`))
-          return () => {} // noop
-        }
+    if (!request) {
+      error(new Error(`Observable of requests given to HTTP ` +
+        `Driver must emit either URL strings or objects with parameters.`))
+      return () => {} // noop
+    }
 
-        try {
-          request.end((err, res) => {
-            if (err) {
-              error(err)
-            } else {
-              add(res)
-              end()
-            }
-          })
-        } catch (err) {
+    try {
+      request.end((err, res) => {
+        if (err) {
           error(err)
+        } else {
+          add(res)
+          end()
         }
+      })
+    } catch (err) {
+      error(err)
+    }
 
-        return function onDispose() {
-          request.abort()
-        }
-      }
-    )
+    return function onDispose() {
+      request.abort()
+    }
+  })
 
 const isolateSource =
   (response$$, scope) =>
@@ -128,30 +125,10 @@ const isolateSink =
         return req
       }
     )
-const validateReqOptions = (reqOptions) => {
-  if (typeof reqOptions !== `string` &&
-      typeof reqOptions !== `object`)
-  {
-    return new Error(`Observable of requests given to ` +
-      `HTTP Driver must emit either URL strings or objects with ` +
-      `parameters.`)
-  }
-  if (typeof reqOptions === `object` &&
-      typeof reqOptions.url !== `string`)
-  {
-    return new Error(`Please provide a \`url\` property in the request ` +
-    `options.`)
-  }
-  return false
-}
 
 const makeHTTPDriver = ({eager = false} = {eager: false}) =>
     request$ => {
       const _response$$ = request$.map(reqOptions => {
-        const validationError = validateReqOptions(reqOptions)
-        if (validationError) {
-          throw validationError
-        }
         let response$ = createResponse$(reqOptions)
         if (eager || reqOptions.eager) {
           response$ = hold(response$)
