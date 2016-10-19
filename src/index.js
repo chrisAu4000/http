@@ -128,27 +128,38 @@ const isolateSink =
         return req
       }
     )
+const validateReqOptions = (reqOptions) => {
+  if (typeof reqOptions !== `string` &&
+      typeof reqOptions !== `object`)
+  {
+    return new Error(`Observable of requests given to ` +
+      `HTTP Driver must emit either URL strings or objects with ` +
+      `parameters.`)
+  }
+  if (typeof reqOptions === `object` &&
+      typeof reqOptions.url !== `string`)
+  {
+    return new Error(`Please provide a \`url\` property in the request ` +
+    `options.`)
+  }
+  return false
+}
 
 const makeHTTPDriver = ({eager = false} = {eager: false}) =>
     request$ => {
-      const _response$$ = request$
-        .map(reqOptions => {
-          console.log(reqOptions)
-          if (typeof reqOptions !== `string` ||
-              typeof reqOptions !== `object`)
-          {
-            throw new Error(`Observable of requests given to ` +
-              `HTTP Driver must emit either URL strings or objects with ` +
-              `parameters.`)
-          }
-          let response$ = createResponse$(reqOptions)
-          if (eager || reqOptions.eager) {
-            response$ = hold(response$)
-            response$.drain()
-          }
-          response$.request = reqOptions
-          return response$
-        })
+      const _response$$ = request$.map(reqOptions => {
+        const validationError = validateReqOptions(reqOptions)
+        if (validationError) {
+          throw validationError
+        }
+        let response$ = createResponse$(reqOptions)
+        if (eager || reqOptions.eager) {
+          response$ = hold(response$)
+          response$.drain()
+        }
+        response$.request = reqOptions
+        return response$
+      })
       _response$$.drain()
       let response$$ = hold(_response$$)
       response$$.isolateSink = isolateSink
