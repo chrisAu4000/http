@@ -46,8 +46,10 @@
     "Frederik Krautwald <fkrautwald@gmail.com> (https://github.com/Frikki)"
   ],
   "dependencies": {
+    "@most/create": "^2.0.1",
     "@most/hold": "^1.1.0",
     "@motorcycle/core": "^1.2.1",
+    "most": "^1.0.4",
     "superagent": "^1.8.3"
   },
   "devDependencies": {
@@ -70,7 +72,6 @@
     "express": "^4.13.4",
     "mkdirp": "^0.5.1",
     "mocha": "^2.4.5",
-    "most": "^0.18.7",
     "rimraf": "^2.5.2",
     "uglify-js": "^2.6.2",
     "validate-commit-message": "^3.0.1"
