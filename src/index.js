@@ -1,6 +1,6 @@
-import most from 'most'
 import hold from '@most/hold'
 import superagent from 'superagent'
+import create from '@most/create'
 
 const notNull = arg => arg !== null
 const typeOf = (type, arg) => typeof arg === type
@@ -74,7 +74,7 @@ const urlToSuperagent = url => superagent.get(url)
 
 const createResponse$ =
   reqOptions =>
-    most.create(
+    create(
       (add, end, error) => {
         let request = is.typeOf(`string`, reqOptions) ?
           urlToSuperagent(reqOptions) :
@@ -129,22 +129,26 @@ const isolateSink =
       }
     )
 
-const makeHTTPDriver =
-  ({eager = false} = {eager: false}) =>
+const makeHTTPDriver = ({eager = false} = {eager: false}) =>
     request$ => {
-      const _response$$ =
-        request$
-          .map(
-            reqOptions => {
-              let response$ = createResponse$(reqOptions)
-              if (eager || reqOptions.eager) {
-                response$ = hold(response$)
-                response$.drain()
-              }
-              response$.request = reqOptions
-              return response$
-            }
-          )
+      const _response$$ = request$
+        .map(reqOptions => {
+          console.log(reqOptions)
+          if (typeof reqOptions !== `string` ||
+              typeof reqOptions !== `object`)
+          {
+            throw new Error(`Observable of requests given to ` +
+              `HTTP Driver must emit either URL strings or objects with ` +
+              `parameters.`)
+          }
+          let response$ = createResponse$(reqOptions)
+          if (eager || reqOptions.eager) {
+            response$ = hold(response$)
+            response$.drain()
+          }
+          response$.request = reqOptions
+          return response$
+        })
       _response$$.drain()
       let response$$ = hold(_response$$)
       response$$.isolateSink = isolateSink
